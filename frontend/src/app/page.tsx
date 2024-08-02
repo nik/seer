@@ -5,6 +5,7 @@ import { useState, useCallback, useRef } from "react"
 export default function Page() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isDragging, setIsDragging] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileChange = useCallback((file: File | null) => {
@@ -54,8 +55,38 @@ export default function Page() {
 
   const handleUpload = () => {
     if (selectedFile) {
-      // TODO: Implement file upload logic
-      console.log("Uploading file:", selectedFile.name)
+      const formData = new FormData()
+      formData.append("file", selectedFile)
+
+      const xhr = new XMLHttpRequest()
+      xhr.open("POST", "http://localhost:8000/upload")
+
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const progress = Math.round((event.loaded / event.total) * 100)
+          setUploadProgress(progress)
+        }
+      }
+
+      xhr.onload = () => {
+        if (xhr.status === 200) {
+          const result = JSON.parse(xhr.responseText)
+          console.log("Upload result:", result)
+          alert(result.status === "success" ? "File uploaded successfully" : "Upload failed")
+        } else {
+          console.error("Error uploading file:", xhr.statusText)
+          alert("Error uploading file")
+        }
+        setUploadProgress(null)
+      }
+
+      xhr.onerror = () => {
+        console.error("Error uploading file")
+        alert("Error uploading file")
+        setUploadProgress(null)
+      }
+
+      xhr.send(formData)
     } else {
       alert("Please select a file first")
     }
@@ -88,6 +119,17 @@ export default function Page() {
         </div>
         {selectedFile && (
           <p className="mt-4 text-sm">Selected file: {selectedFile.name}</p>
+        )}
+        {uploadProgress !== null && (
+          <div className="w-full mt-4">
+            <div className="bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+              <div
+                className="bg-blue-600 h-2.5 rounded-full"
+                style={{ width: `${uploadProgress}%` }}
+              ></div>
+            </div>
+            <p className="text-center mt-2">{uploadProgress}% uploaded</p>
+          </div>
         )}
         <button
           onClick={handleUpload}
