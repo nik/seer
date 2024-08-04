@@ -3,10 +3,11 @@
 import { useState, useCallback, useRef } from "react";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Progress } from '@/components/ui/progress';
+import { Label } from '@/components/ui/label';
 
 export default function Page() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -30,34 +31,6 @@ export default function Page() {
     }
   }, []);
 
-  const handleDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
-  }, []);
-
-  const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-  }, []);
-
-  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-  }, []);
-
-  const handleDrop = useCallback(
-    (e: React.DragEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setIsDragging(false);
-      const file = e.dataTransfer.files[0];
-      handleFileChange(file);
-    },
-    [handleFileChange]
-  );
-
   const handleUpload = () => {
     if (selectedFile) {
       const formData = new FormData();
@@ -77,11 +50,6 @@ export default function Page() {
         if (xhr.status === 200) {
           const result = JSON.parse(xhr.responseText);
           console.log('Upload result:', result);
-          alert(
-            result.status === 'success'
-              ? 'File uploaded successfully'
-              : 'Upload failed'
-          );
         } else {
           console.error('Error uploading file:', xhr.statusText);
           alert('Error uploading file');
@@ -103,21 +71,30 @@ export default function Page() {
 
   return (
     <main className="flex flex-col items-center justify-center min-h-screen bg-white">
-      <h1 className="text-3xl font-bold mb-8">Upload Zipped Codebase</h1>
       <div className="flex flex-col items-center justify-center">
-        <Input
-          ref={fileInputRef}
-          type="file"
-          accept=".zip"
-          onChange={(e) => handleFileChange(e.target.files?.[0] || null)}
-        />
+        <div className="grid w-full max-w-sm items-center gap-2">
+          <Label htmlFor="file">Upload your code</Label>
+          <Input
+            ref={fileInputRef}
+            id="file"
+            type="file"
+            accept=".zip"
+            onChange={(e) => handleFileChange(e.target.files?.[0] || null)}
+          />
+          {selectedFile && (
+            <p className="mt-2 text-sm">Selected file: {selectedFile.name}</p>
+          )}
+          <Button className="w-full max-w-sm" onClick={handleUpload}>
+            Upload
+          </Button>
+          {uploadProgress !== null && (
+            <div className="w-full">
+              <Progress value={uploadProgress} className="w-full" />
+              <p className="text-sm text-center mt-1">{uploadProgress}%</p>
+            </div>
+          )}
+        </div>
       </div>
-      {selectedFile && (
-        <p className="mt-4 text-sm">Selected file: {selectedFile.name}</p>
-      )}
-      <Button className="mt-4" onClick={handleUpload}>
-        Upload
-      </Button>
     </main>
   );
 }
