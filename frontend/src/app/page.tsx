@@ -31,41 +31,48 @@ export default function Page() {
     }
   }, []);
 
-  const handleUpload = () => {
-    if (selectedFile) {
-      const formData = new FormData();
-      formData.append('file', selectedFile);
-
-      const xhr = new XMLHttpRequest();
-      xhr.open('POST', 'http://localhost:8000/upload');
-
-      xhr.upload.onprogress = (event) => {
-        if (event.lengthComputable) {
-          const progress = Math.round((event.loaded / event.total) * 100);
-          setUploadProgress(progress);
-        }
-      };
-
-      xhr.onload = () => {
-        if (xhr.status === 200) {
-          const result = JSON.parse(xhr.responseText);
-          console.log('Upload result:', result);
-        } else {
-          console.error('Error uploading file:', xhr.statusText);
-          alert('Error uploading file');
-        }
-        setUploadProgress(null);
-      };
-
-      xhr.onerror = () => {
-        console.error('Error uploading file');
-        alert('Error uploading file');
-        setUploadProgress(null);
-      };
-
-      xhr.send(formData);
-    } else {
+  const handleUpload = async () => {
+    if (!selectedFile) {
       alert('Please select a file first');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+
+    try {
+      const response = await fetch('http://localhost:8000/upload', {
+        method: 'POST',
+        body: formData,
+        // @ts-ignore: Custom property for tracking upload progress
+        duplex: 'half',
+      });
+
+      console.log('Response:', response);
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('Response body is not readable');
+      console.log('Reader:', reader);
+
+      const contentLength = +(response.headers.get('Content-Length') || 0);
+
+      let receivedLength = 0;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        receivedLength += value.length;
+        setUploadProgress(Math.round((receivedLength / contentLength) * 100));
+      }
+
+      const result = await response.body;
+      console.log('Upload result:', result);
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      alert('Error uploading file');
+    } finally {
+      setUploadProgress(null);
     }
   };
 
