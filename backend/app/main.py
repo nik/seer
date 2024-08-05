@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 import shutil
 import zipfile
 from pathlib import Path
+import tasks
+
 
 app = FastAPI()
 
@@ -14,7 +16,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-workspace_dir = Path("workplace")
+workspace_dir = Path("workspace")
 workspace_dir.mkdir(exist_ok=True)
 
 
