@@ -1,6 +1,8 @@
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 import shutil
+import zipfile
+from pathlib import Path
 
 app = FastAPI()
 
@@ -12,18 +14,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
+workspace_dir = Path("workplace")
+workspace_dir.mkdir(exist_ok=True)
 
 
 @app.post("/upload")
-async def upload_file(file: UploadFile = File(...)):
+async def upload_code(file: UploadFile = File(...)):
     try:
-        with open(f"uploaded_{file.filename}", "wb") as buffer:
+        file_path = workspace_dir / file.filename
+        with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
-        print(f"File uploaded: {file.filename}")
+
+        with zipfile.ZipFile(file_path, "r") as zip_ref:
+            zip_ref.extractall(workspace_dir)
+
+        print(f"File uploaded and unzipped: {file.filename}")
         return {"filename": file.filename, "status": "success"}
     except Exception as e:
         print(f"Error uploading file: {str(e)}")

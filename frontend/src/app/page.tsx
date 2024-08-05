@@ -5,11 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Label } from '@/components/ui/label';
+import { useRouter } from 'next/navigation';
 
 export default function Page() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
 
   const handleFileChange = useCallback((file: File | null) => {
     if (file && file.type === 'application/zip') {
@@ -43,18 +45,14 @@ export default function Page() {
     try {
       const response = await fetch('http://localhost:8000/upload', {
         method: 'POST',
-        body: formData,
-        // @ts-ignore: Custom property for tracking upload progress
-        duplex: 'half',
+        body: formData
       });
 
-      console.log('Response:', response);
       if (!response.ok)
         throw new Error(`HTTP error! status: ${response.status}`);
 
       const reader = response.body?.getReader();
       if (!reader) throw new Error('Response body is not readable');
-      console.log('Reader:', reader);
 
       const contentLength = +(response.headers.get('Content-Length') || 0);
 
@@ -66,8 +64,7 @@ export default function Page() {
         setUploadProgress(Math.round((receivedLength / contentLength) * 100));
       }
 
-      const result = await response.body;
-      console.log('Upload result:', result);
+      router.push('/results');
     } catch (error) {
       console.error('Error uploading file:', error);
       alert('Error uploading file');
