@@ -37,4 +37,4 @@ frontend/next-env.d.ts
 backend/app/workspace/
 # Python virtual environment
 backend/app/venv/
-backend/app/__pycache__/
+**/__pycache__/

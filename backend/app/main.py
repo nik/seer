@@ -21,7 +21,7 @@ workspace_dir.mkdir(exist_ok=True)
 
 
 @app.post("/upload")
-async def upload_code(file: UploadFile = File(...)):
+async def upload_code(file: UploadFile = File(...)) -> dict[str, str | None]:
     try:
         file_path = workspace_dir / file.filename
         with open(file_path, "wb") as buffer:
@@ -31,6 +31,7 @@ async def upload_code(file: UploadFile = File(...)):
             zip_ref.extractall(workspace_dir)
 
         print(f"File uploaded and unzipped: {file.filename}")
+        tasks.combine_code(ignored_extensions=["py", "ts", "typed", "tsx"])
         return {"filename": file.filename, "status": "success"}
     except Exception as e:
         print(f"Error uploading file: {str(e)}")
