@@ -11,7 +11,8 @@ fastapi = {extras = ["standard"], version = "^0.112.0"}
 uvicorn = {extras = ["standard"], version = "^0.30.5"}
 celery = {extras = ["redis"], version = "^5.4.0"}
 tarsier = "^0.6.32"
-
+playwright = "^1.45.1"
+llama-index-llms-anthropic = "^0.1.16"
 
 [build-system]
 requires = ["poetry-core"]

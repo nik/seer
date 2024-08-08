@@ -38,3 +38,5 @@ backend/workspace/
 # Python virtual environment
 backend/app/venv/
 **/__pycache__/
+
+google_cloud_credentials.json
