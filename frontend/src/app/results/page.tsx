@@ -7,10 +7,23 @@ import { Button } from '@/components/ui/button';
 export default function Page() {
   const [text, setText] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission here
-    console.log('Submitted text:', text);
+    try {
+      const response = await fetch('http://localhost:8000/query', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text }),
+      });
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      console.log('Query submitted successfully');
+    } catch (error) {
+      console.error('Error submitting query:', error);
+    }
   };
 
   return (
@@ -20,7 +33,7 @@ export default function Page() {
           className="min-h-[200px] mb-4 p-2"
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="What would you like to know about your codebase?"
+          placeholder="What would you like to know about your product?"
         />
         <Button className="w-full" type="submit">
           Submit

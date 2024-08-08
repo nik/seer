@@ -4,7 +4,7 @@ import shutil
 import zipfile
 from pathlib import Path
 import tasks
-
+from pydantic import BaseModel
 
 app = FastAPI()
 
@@ -36,3 +36,11 @@ async def upload_code(file: UploadFile = File(...)) -> dict[str, str | None]:
     except Exception as e:
         print(f"Error uploading file: {str(e)}")
         return {"error": str(e), "status": "failed"}
+
+class Query(BaseModel):
+    text: str
+
+@app.post("/query")
+async def query(query: Query):
+    print(f"Received query: {query.text}")
+    return {"message": "Query received successfully"}
