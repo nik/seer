@@ -1,5 +1,6 @@
 import asyncio
 import json
+import os
 from typing import List
 
 from playwright.async_api import async_playwright
@@ -8,17 +9,23 @@ from tarsier.ocr import GoogleVisionOCRService
 from llama_index.core.tools import FunctionTool, BaseTool
 from llama_index.core.agent import ReActAgent
 from llama_index.llms.anthropic import Anthropic
+from llama_index.llms.groq import Groq
 
 
 class TarsierAgent:
-    def __init__(self):
+    def __init__(self, llm_provider: str = "Groq"):
         self.tarsier = None
         self.tag_to_xpath = {}
         self.page = None
         self.tarsier_agent = None
+        self.llm_provider = llm_provider
 
     def initialize(self):
-        with open("google_cloud_credentials.json", "r") as f:
+        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+        credentials_path = os.path.join(project_root, "google_cloud_credentials.json")
+        print(credentials_path)
+
+        with open(credentials_path, "r") as f:
             credentials = json.load(f)
 
         ocr_service = GoogleVisionOCRService(credentials)
@@ -26,10 +33,17 @@ class TarsierAgent:
 
         tools = self.get_tools()
 
-        llm = Anthropic(
-            model="claude-3-5-sonnet-20240620",
-            api_key="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",
-        )
+        if self.llm_provider == "Anthropic":
+            llm = Anthropic(
+                model="claude-3-5-sonnet-20240620",
+                api_key="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",
+            )
+        else:
+            llm = Groq(
+                model="llama-3.1-70b-versatile",
+                api_key="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",
+            )
+
         self.tarsier_agent = ReActAgent.from_tools(
             tools,
             llm=llm,
@@ -44,6 +58,7 @@ class TarsierAgent:
             permissions=["clipboard-read", "clipboard-write"]
         )
         self.page = await context.new_page()
+        print('in here')
         await self.page.goto("https://todostaging.netlify.app/")
         await self.tarsier_agent.achat(query)
 

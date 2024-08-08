@@ -13,6 +13,7 @@ celery = {extras = ["redis"], version = "^5.4.0"}
 tarsier = "^0.6.32"
 playwright = "^1.45.1"
 llama-index-llms-anthropic = "^0.1.16"
+llama-index-llms-groq = "^0.1.4"
 
 [build-system]
 requires = ["poetry-core"]

@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import shutil
 import zipfile
 from pathlib import Path
-import tasks
+import tasks as tasks
 from pydantic import BaseModel
 
 app = FastAPI()
@@ -43,7 +43,7 @@ class Query(BaseModel):
 @app.post("/query")
 async def query(query: Query):
     print(f"Received query: {query.text}")
-    tasks.run_tarsier_query("""
+    tasks.run_tarsier_query.delay("""
     1. Read the page.
 
 2. Look for an existing task in the task list. If there are no tasks, follow these steps to create one:
