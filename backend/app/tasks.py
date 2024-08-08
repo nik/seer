@@ -1,6 +1,8 @@
 import os
 from scripts.dump import dump_code
 from celery.app import Celery
+from ai.tarsier import TarsierAgent
+import asyncio
 
 redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
 celery_app = Celery(__name__, broker=redis_url, backend=redis_url)
@@ -15,3 +17,10 @@ def combine_code(ignored_extensions=None):
         output_file=f"{main_dir}/combined_code_dump.txt",
         file_extensions=ignored_extensions,
     )
+
+
+@celery_app.task
+def run_tarsier_query(query: str):
+    agent = TarsierAgent()
+    agent.initialize()
+    agent.run(query)

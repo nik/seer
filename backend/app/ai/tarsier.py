@@ -1,22 +1,51 @@
 import asyncio
 import json
+from typing import List
 
 from playwright.async_api import async_playwright
-
 from tarsier.core import Tarsier
 from tarsier.ocr import GoogleVisionOCRService
-
 from llama_index.core.tools import FunctionTool, BaseTool
 from llama_index.core.agent import ReActAgent
 from llama_index.llms.anthropic import Anthropic
 
-from typing import List
 
-class Tools:
-    def __init__(self, tarsier, tag_to_xpath, page):
-        self.tarsier = tarsier
-        self.tag_to_xpath = tag_to_xpath
-        self.page = page
+class TarsierAgent:
+    def __init__(self):
+        self.tarsier = None
+        self.tag_to_xpath = {}
+        self.page = None
+        self.tarsier_agent = None
+
+    def initialize(self):
+        with open("google_cloud_credentials.json", "r") as f:
+            credentials = json.load(f)
+
+        ocr_service = GoogleVisionOCRService(credentials)
+        self.tarsier = Tarsier(ocr_service)
+
+        tools = self.get_tools()
+
+        llm = Anthropic(
+            model="claude-3-5-sonnet-20240620",
+            api_key="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",
+        )
+        self.tarsier_agent = ReActAgent.from_tools(
+            tools,
+            llm=llm,
+            verbose=True,
+            max_iterations=30,
+        )
+
+    async def run(self, query: str):
+        p = await async_playwright().__aenter__()
+        browser = await p.chromium.launch(headless=True)
+        context = await browser.new_context(
+            permissions=["clipboard-read", "clipboard-write"]
+        )
+        self.page = await context.new_page()
+        await self.page.goto("https://todostaging.netlify.app/")
+        await self.tarsier_agent.achat(query)
 
     def get_tools(self) -> List[BaseTool]:
         read_page_tool = FunctionTool.from_defaults(
@@ -64,9 +93,7 @@ class Tools:
         Click on an element based on element_id and return the new page state
         """
         x_path = self.tag_to_xpath[element_id]
-
         element = self.page.locator(x_path)
-
         is_animated = await self.page.evaluate(
             """
             (selector) => {
@@ -78,14 +105,12 @@ class Tools:
         """,
             x_path,
         )
-
         if is_animated:
             print(f"Element {element_id} is animated. Force clicking.")
             await element.click(force=True)
         else:
             print(f"Element {element_id} is stable. Normal clicking.")
             await element.click()
-
         await self.page.wait_for_timeout(2000)
         return await self.read_page()
 
@@ -94,7 +119,6 @@ class Tools:
         Input text into a textbox based on element_id and return the new page state
         """
         x_path = self.tag_to_xpath[element_id]
-
         print(x_path)
         await self.page.locator(x_path).press_sequentially(text)
         return await self.read_page()
@@ -129,7 +153,6 @@ class Tools:
         Open a new tab and return the new page state
         """
         clipboardText1 = await self.page.evaluate("navigator.clipboard.readText()")
-
         await self.page.goto(clipboardText1)
         return await self.read_page()
 
@@ -138,38 +161,3 @@ class Tools:
         Sleeps for 10 seconds
         """
         await self.page.wait_for_timeout(10000)
-
-
-async def run_tarsier():
-    with open("google_cloud_credentials.json", "r") as f:
-        credentials = json.load(f)
-
-    p = await async_playwright().__aenter__()
-    browser = await p.chromium.launch(headless=True)
-    context = await browser.new_context(
-        permissions=["clipboard-read", "clipboard-write"]
-    )
-    page = await context.new_page()
-
-    ocr_service = GoogleVisionOCRService(credentials)
-    tarsier = Tarsier(ocr_service)
-    tag_to_xpath = {}
-
-    tools = Tools(tarsier, tag_to_xpath, page)
-    tools = tools.get_tools()
-
-    # llm = Anthropic(model="claude-3-haiku-20240307", api_key="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")
-    llm = Anthropic(
-        model="claude-3-5-sonnet-20240620",
-        api_key="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",
-    )
-    tarsier_agent = ReActAgent.from_tools(
-        tools,
-        llm=llm,
-        verbose=True,
-        max_iterations=30,
-        # system_prompt="You are a web interaction agent. Start first by using the read page tool to understand where you currently are. You will be passed in OCR text of a web page.",
-    )
-
-    await page.goto("http://localhost:5173")
-    await tarsier_agent.achat()

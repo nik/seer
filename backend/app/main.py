@@ -43,4 +43,13 @@ class Query(BaseModel):
 @app.post("/query")
 async def query(query: Query):
     print(f"Received query: {query.text}")
+    tasks.run_tarsier_query("""
+    1. Read the page.
+
+2. Look for an existing task in the task list. If there are no tasks, follow these steps to create one:
+   a. Find and click the "+" button to add a new task.
+   b. In the "Task Name" field, enter "Test Task for Sharing".
+   c. Click the "Create Task" button.
+3. That is all I want you to do.
+    """)
     return {"message": "Query received successfully"}
