@@ -14,6 +14,7 @@ from llama_index.llms.groq import Groq
 
 class TarsierAgent:
     def __init__(self, llm_provider: str = "Groq"):
+        self.flow_step = 0
         self.tarsier = None
         self.tag_to_xpath = {}
         self.page = None
@@ -58,7 +59,6 @@ class TarsierAgent:
             permissions=["clipboard-read", "clipboard-write"]
         )
         self.page = await context.new_page()
-        print('in here')
         await self.page.goto("https://todostaging.netlify.app/")
         await self.tarsier_agent.achat(query)
 
@@ -82,6 +82,9 @@ class TarsierAgent:
         open_tab_tool = FunctionTool.from_defaults(
             fn=self.open_tab, async_fn=self.open_tab
         )
+        increment_flow_step_tool = FunctionTool.from_defaults(
+            fn=self.increment_flow_step, async_fn=self.increment_flow_step
+        )
         return [
             read_page_tool,
             click_tool,
@@ -90,7 +93,14 @@ class TarsierAgent:
             count_elements_tool,
             screenshot_page_tool,
             open_tab_tool,
+            increment_flow_step_tool,
         ]
+
+    async def increment_flow_step(self):
+        """
+        Increment the flow step
+        """
+        self.flow_step += 1
 
     async def read_page(self) -> str:
         """
@@ -134,7 +144,6 @@ class TarsierAgent:
         Input text into a textbox based on element_id and return the new page state
         """
         x_path = self.tag_to_xpath[element_id]
-        print(x_path)
         await self.page.locator(x_path).press_sequentially(text)
         return await self.read_page()
 
@@ -156,12 +165,17 @@ class TarsierAgent:
             count += await self.page.locator(x_path).count()
         return count
 
-    async def screenshot_page(self) -> str:
+    async def screenshot_page(self, filename: str, flow_step: int) -> str:
         """
-        Take a screenshot of the page and save it to a file
+        Take a screenshot of the page and save it to a file with the name of the current flow step as part of the file
         """
-        await self.page.screenshot(path="screenshot.png")
-        return "screenshot.png"
+        screenshot, _ = await self.tarsier.page_to_image(
+            self.page, tag_text_elements=False, keep_tags_showing=False, tagless=False
+        )
+        with open(f"../workspace/{filename}_{flow_step}.png", "wb") as f:
+            f.write(screenshot)
+            print(f"Writing screenshot to screenshot.png")
+        return f"{filename}_{flow_step}.png"
 
     async def open_tab(self, url: str):
         """
