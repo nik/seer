@@ -36,6 +36,5 @@ class Query(BaseModel):
 
 @app.post("/query")
 async def query(query: Query):
-    print(f"Received query: {query.text}")
     tasks.run_tarsier_query.delay(query.text)
     return {"message": "Query received successfully"}

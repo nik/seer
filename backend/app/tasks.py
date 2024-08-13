@@ -5,8 +5,9 @@ from ai.tarsier import TarsierAgent
 import asyncio
 from celery.utils.log import get_task_logger
 from llama_index.core.program import LLMTextCompletionProgram
-from llama_index.llms.groq import Groq
+from llama_index.llms.anthropic import Anthropic
 from llama_index.core import PromptTemplate
+from llama_index.core.llms import ChatMessage
 from ai.prompt import PROMPT
 from pydantic import BaseModel
 
@@ -27,10 +28,10 @@ def combine_code(repo_name, ignored_extensions=None):
 
     parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
-    repo_dir = os.path.join(parent_dir, "workspace", repo_name)
-    output_file = os.path.join(parent_dir, "workspace", "combined_code_dump.txt")
-    print(repo_dir)
-    print(output_file)
+    repo_dir = os.path.join(parent_dir, "backend", "workspace", repo_name)
+    output_file = os.path.join(
+        parent_dir, "backend", "workspace", "combined_code_dump.txt"
+    )
     dump_code(
         repo_dir=repo_dir,
         ignore_dirs=["node_modules", "dev-dist"],
@@ -48,23 +49,23 @@ def run_tarsier_query(query: str):
     with open("../workspace/combined_code_dump.txt", "r") as f:
         codebase = f.read()
 
-    llm = Groq(
-        model="llama-3.1-70b-versatile",
-        api_key="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",
+    llm = Anthropic(
+        model="claude-3-5-sonnet-20240620",
+        api_key="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",
     )
-    prompt_tmpl = PromptTemplate(PROMPT)
-    prompt_tmpl.format(user_query=query, codebase=codebase)
 
-    logger.info(f"Prompt: {prompt_tmpl}")
-    # program = LLMTextCompletionProgram.from_defaults(
-    #    output_cls=GenerateStepsOutput, llm=llm, prompt=prompt_tmpl, verbose=True
-    # )
-    # response = program()
+    prompt_tmpl = PromptTemplate(PROMPT)
+    formatted_prompt = prompt_tmpl.format(user_query=query, codebase=codebase)
+
+    messages = [
+        ChatMessage(role="user", content=formatted_prompt),
+    ]
+    response = llm.chat(messages)
 
     # agent_instructions = (
-    #    response.split("<agent_todo>")[1].split("</agent_todo>")[0].strip()
+    #     response.to_string().split("<agent_todo>")[1].split("</agent_todo>")[0].strip()
     # )
 
-    # logger.info(f"Agent instructions: {agent_instructions}")
+    logger.info(f"Agent instructions: {response}")
     # asyncio.run(agent.run(agent_instructions))
     return "Done"
