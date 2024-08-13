@@ -6,6 +6,7 @@ import asyncio
 from celery.utils.log import get_task_logger
 from llama_index.core.program import LLMTextCompletionProgram
 from llama_index.llms.anthropic import Anthropic
+from llama_index.llms.openai import OpenAI
 from llama_index.core import PromptTemplate
 from llama_index.core.llms import ChatMessage
 from ai.prompt import PROMPT
@@ -49,9 +50,18 @@ def run_tarsier_query(query: str):
     with open("../workspace/combined_code_dump.txt", "r") as f:
         codebase = f.read()
 
-    llm = Anthropic(
-        model="claude-3-5-sonnet-20240620",
-        api_key="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",
+    # llm = Anthropic(
+    #     model="claude-3-5-sonnet-20240620",
+    #     api_key="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",
+    #     temperature=0.1,
+    #     max_tokens=4096,
+    # )
+
+    llm = OpenAI(
+        model="gpt-4o-mini",
+        api_key="sk-proj-29d4DSvaHkCwNPAHMAEnT3BlbkFJ8YrVeQ0glkDOxKe2gQaS",
+        temperature=0.1,
+        max_tokens=4096,
     )
 
     prompt_tmpl = PromptTemplate(PROMPT)
@@ -62,10 +72,12 @@ def run_tarsier_query(query: str):
     ]
     response = llm.chat(messages)
 
-    # agent_instructions = (
-    #     response.to_string().split("<agent_todo>")[1].split("</agent_todo>")[0].strip()
-    # )
+    agent_instructions = (
+        response.message.content.split("<agent_todo>")[1]
+        .split("</agent_todo>")[0]
+        .strip()
+    )
 
-    logger.info(f"Agent instructions: {response}")
-    # asyncio.run(agent.run(agent_instructions))
+    logger.info(f"Agent instructions: {agent_instructions}")
+    asyncio.run(agent.run(agent_instructions))
     return "Done"
