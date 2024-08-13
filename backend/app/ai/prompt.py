@@ -57,7 +57,8 @@ Provide your final output in the <agent_todo></agent_todo> XML tags
 
 Ensure that your instructions are clear, detailed, and specific to the codebase and user query provided. 
 The goal is to enable another AI to give a comprehensive and accurate explanation of the queried functionality or flow based solely on your instructions.
-After all of the instructions, end with "That is all I want you to do." Do not insert it into every step, please. 
+Between every instruction, I want you to add an instruction to "Take a screenshot of the page and increment the flow count by 1."
+After all of the instructions, all the way at the very end, finish with "That is all I want you to do." Do not insert it into every step, please. 
 
 Here are some good examples of what the agent that you're helping is looking for:
 
