@@ -12,6 +12,7 @@ def dump_code(
     if file_extensions is None:
         file_extensions = ["py", "ts", "typed", "tsx"]
 
+    os.makedirs(os.path.dirname(output_file), exist_ok=True)
     with open(output_file, "w") as out:
         for root, dirs, files in os.walk(repo_dir):
             dirs[:] = [d for d in dirs if d not in ignore_dirs]
