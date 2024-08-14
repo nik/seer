@@ -43,12 +43,6 @@ async def query(query: Query):
     return {"message": "Query received successfully", "task_id": task.id}
 
 
-@app.get("/job_status/{task_id}")
-async def get_job_status(task_id: str):
-    task_result = AsyncResult(task_id)
-    return {"status": task_result.status}
-
-
 @app.get("/job_status_stream/{task_id}")
 async def job_status_stream(task_id: str, request: Request):
     async def event_generator():
