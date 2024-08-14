@@ -41,8 +41,9 @@ def combine_code(repo_name, ignored_extensions=None):
     )
 
 
-@celery_app.task
-def run_tarsier_query(query: str):
+@celery_app.task(bind=True)
+def run_tarsier_query(self, query: str):
+    self.update_state(state="PROGRESS", meta={"progress": "Starting Tarsier query"})
     agent = TarsierAgent()
     agent.initialize()
     logger.info(f"Running Tarsier query: {query}")
@@ -80,4 +81,5 @@ def run_tarsier_query(query: str):
 
     logger.info(f"Agent instructions: {agent_instructions}")
     asyncio.run(agent.run(agent_instructions))
+    self.update_state(state="SUCCESS", meta={"status": "Query completed"})
     return "Done"

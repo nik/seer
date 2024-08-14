@@ -172,9 +172,13 @@ class TarsierAgent:
         screenshot, _ = await self.tarsier.page_to_image(
             self.page, tag_text_elements=False, keep_tags_showing=False, tagless=False
         )
-        with open(f"../workspace/{filename}_{flow_step}.png", "wb") as f:
+        ui_flows_dir = "../workspace/ui_flows"
+        os.makedirs(ui_flows_dir, exist_ok=True)
+
+        screenshot_path = os.path.join(ui_flows_dir, f"{filename}_{flow_step}.png")
+        with open(screenshot_path, "wb") as f:
             f.write(screenshot)
-            print(f"Writing screenshot to screenshot.png")
+            print(f"Writing screenshot to {screenshot_path}")
         return f"{filename}_{flow_step}.png"
 
     async def open_tab(self, url: str):

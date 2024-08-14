@@ -4,6 +4,7 @@ import shutil
 import zipfile
 from pathlib import Path
 import tasks as tasks
+from celery.result import AsyncResult
 from pydantic import BaseModel
 
 app = FastAPI()
@@ -36,5 +37,11 @@ class Query(BaseModel):
 
 @app.post("/query")
 async def query(query: Query):
-    tasks.run_tarsier_query.delay(query.text)
-    return {"message": "Query received successfully"}
+    task = tasks.run_tarsier_query.delay(query.text)
+    return {"message": "Query received successfully", "task_id": task.id}
+
+
+@app.get("/job_status/{task_id}")
+async def get_job_status(task_id: str):
+    task_result = AsyncResult(task_id)
+    return {"status": task_result.status}
