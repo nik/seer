@@ -32,26 +32,29 @@ export default function Page() {
   };
 
   useEffect(() => {
-    const checkJobStatus = async () => {
-      if (taskId && jobStatus !== 'SUCCESS') {
-        try {
-          const response = await fetch(
-            `http://localhost:8000/job_status/${taskId}`
-          );
-          if (response.ok) {
-            const data = await response.json();
-            setJobStatus(data.status);
-          }
-        } catch (error) {
-          console.error('Error checking job status:', error);
+    if (taskId) {
+      const eventSource = new EventSource(`http://localhost:8000/job_status_stream/${taskId}`);
+
+      eventSource.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        setJobStatus(data);
+
+        if (data === 'SUCCESS' || data === 'FAILURE') {
+          setJobStatus(data);
+          eventSource.close();
         }
-      }
-    };
+      };
 
-    const intervalId = setInterval(checkJobStatus, 5000); // Check every 5 seconds
+      eventSource.onerror = (error) => {
+        console.error('EventSource failed:', error);
+        eventSource.close();
+      };
 
-    return () => clearInterval(intervalId);
-  }, [taskId, jobStatus]);
+      return () => {
+        eventSource.close();
+      };
+    }
+  }, [taskId]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-white">

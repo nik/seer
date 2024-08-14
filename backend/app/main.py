@@ -1,5 +1,7 @@
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, Request
+from sse_starlette import EventSourceResponse
 from fastapi.middleware.cors import CORSMiddleware
+import asyncio
 import shutil
 import zipfile
 from pathlib import Path
@@ -45,3 +47,21 @@ async def query(query: Query):
 async def get_job_status(task_id: str):
     task_result = AsyncResult(task_id)
     return {"status": task_result.status}
+
+
+@app.get("/job_status_stream/{task_id}")
+async def job_status_stream(task_id: str, request: Request):
+    async def event_generator():
+        while True:
+            if await request.is_disconnected():
+                break
+
+            task_result = AsyncResult(task_id)
+            yield {"event": "job_status", "data": task_result.status}
+
+            if task_result.status in ["SUCCESS", "FAILURE"]:
+                break
+
+            await asyncio.sleep(1)
+
+    return EventSourceResponse(event_generator())

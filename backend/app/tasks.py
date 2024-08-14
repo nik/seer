@@ -71,6 +71,7 @@ def run_tarsier_query(self, query: str):
     messages = [
         ChatMessage(role="user", content=formatted_prompt),
     ]
+    self.update_state(state="PROGRESS", meta={"progress": "Generating response"})
     response = llm.chat(messages)
 
     agent_instructions = (
@@ -80,6 +81,7 @@ def run_tarsier_query(self, query: str):
     )
 
     logger.info(f"Agent instructions: {agent_instructions}")
+    self.update_state(state="PROGRESS", meta={"progress": "Running agent"})
     asyncio.run(agent.run(agent_instructions))
     self.update_state(state="SUCCESS", meta={"status": "Query completed"})
     return "Done"
