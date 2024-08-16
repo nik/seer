@@ -167,7 +167,7 @@ class TarsierAgent:
 
     async def screenshot_page(self, filename: str, flow_step: int) -> str:
         """
-        Take a screenshot of the page and save it to a file with the name of the current flow step as part of the file
+        Take a screenshot of a page
         """
         screenshot, _ = await self.tarsier.page_to_image(
             self.page, tag_text_elements=False, keep_tags_showing=False, tagless=False
