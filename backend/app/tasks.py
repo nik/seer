@@ -25,8 +25,6 @@ class GenerateStepsOutput(BaseModel):
 
 @celery_app.task
 def combine_code(repo_name, ignored_extensions=None):
-    import os
-
     parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
     repo_dir = os.path.join(parent_dir, "backend", "workspace", repo_name)
