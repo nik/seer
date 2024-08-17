@@ -25,7 +25,7 @@ export default function Page() {
       }
       const data = await response.json();
       setTaskId(data.task_id);
-      setJobStatus('PENDING');
+      setJobStatus('PROGRESS');
     } catch (error) {
       console.error('Error submitting query:', error);
     }
@@ -33,17 +33,18 @@ export default function Page() {
 
   useEffect(() => {
     if (taskId) {
-      const eventSource = new EventSource(`http://localhost:8000/job_status_stream/${taskId}`);
+      const eventSource = new EventSource(
+        `http://localhost:8000/job_status_stream/${taskId}`
+      );
 
-      eventSource.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        setJobStatus(data);
+      eventSource.addEventListener('job_status', (event) => {
+        setJobStatus(event.data);
 
-        if (data === 'SUCCESS' || data === 'FAILURE') {
-          setJobStatus(data);
+        if (event.data === 'SUCCESS' || event.data === 'FAILURE') {
+          setJobStatus(event.data);
           eventSource.close();
         }
-      };
+      });
 
       eventSource.onerror = (error) => {
         console.error('EventSource failed:', error);

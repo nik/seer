@@ -53,9 +53,6 @@ async def job_status_stream(task_id: str, request: Request):
             task_result = AsyncResult(task_id)
             yield {"event": "job_status", "data": task_result.status}
 
-            if task_result.status in ["SUCCESS", "FAILURE"]:
-                break
-
             await asyncio.sleep(1)
 
     return EventSourceResponse(event_generator())
