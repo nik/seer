@@ -39,4 +39,8 @@ backend/workspace/
 backend/app/venv/
 **/__pycache__/
 
-google_cloud_credentials.json
+backend/google_cloud_credentials.json
+
+.env
+.env.*
+!.env.example

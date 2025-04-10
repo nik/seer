@@ -11,6 +11,9 @@ from llama_index.core import PromptTemplate
 from llama_index.core.llms import ChatMessage
 from ai.prompt import PROMPT
 from pydantic import BaseModel
+from dotenv import load_dotenv
+
+load_dotenv()
 
 redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
 celery_app = Celery(__name__, broker=redis_url, backend=redis_url)
@@ -39,7 +42,7 @@ def combine_code(repo_name, ignored_extensions=None):
     )
 
 
-@celery_app.task(bind=True)
+@celery_app.task(bind=True, llm_provider="OpenAI")
 def run_tarsier_query(self, query: str):
     self.update_state(state="PROGRESS", meta={"progress": "Starting Tarsier query"})
     agent = TarsierAgent()
@@ -49,19 +52,20 @@ def run_tarsier_query(self, query: str):
     with open("../workspace/combined_code_dump.txt", "r") as f:
         codebase = f.read()
 
-    # llm = Anthropic(
-    #     model="claude-3-5-sonnet-20240620",
-    #     api_key="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",
-    #     temperature=0.1,
-    #     max_tokens=4096,
-    # )
-
-    llm = OpenAI(
-        model="gpt-4o-mini",
-        api_key="sk-proj-29d4DSvaHkCwNPAHMAEnT3BlbkFJ8YrVeQ0glkDOxKe2gQaS",
-        temperature=0.1,
-        max_tokens=4096,
-    )
+    if self.llm_provider == "Anthropic":
+        llm = Anthropic(
+            model="claude-3-5-sonnet",
+            api_key=os.getenv("ANTHROPIC_API_KEY"),
+            temperature=0.1,
+            max_tokens=4096,
+        )
+    else:
+        llm = OpenAI(
+            model="gpt-4o-mini",
+            api_key=os.getenv("OPENAI_API_KEY"),
+            temperature=0.1,
+            max_tokens=4096,
+        )
 
     prompt_tmpl = PromptTemplate(PROMPT)
     formatted_prompt = prompt_tmpl.format(user_query=query, codebase=codebase)

@@ -2,6 +2,7 @@ import asyncio
 import json
 import os
 from typing import List
+from dotenv import load_dotenv
 
 from playwright.async_api import async_playwright
 from tarsier.core import Tarsier
@@ -11,6 +12,7 @@ from llama_index.core.agent import ReActAgent
 from llama_index.llms.anthropic import Anthropic
 from llama_index.llms.groq import Groq
 
+load_dotenv()
 
 class TarsierAgent:
     def __init__(self, llm_provider: str = "Groq"):
@@ -37,12 +39,12 @@ class TarsierAgent:
         if self.llm_provider == "Anthropic":
             llm = Anthropic(
                 model="claude-3-5-sonnet-20240620",
-                api_key="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",
+                api_key=os.getenv("ANTHROPIC_API_KEY"),
             )
         else:
             llm = Groq(
                 model="llama-3.1-70b-versatile",
-                api_key="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",
+                api_key=os.getenv("GROQ_API_KEY"),
             )
 
         self.tarsier_agent = ReActAgent.from_tools(
