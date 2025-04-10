@@ -6,3 +6,5 @@ For instance, if I am a product manager and want to understand my current produc
 running through all of them, I can ask seer -- "what is the onboarding process" which will return a bunch of relevant screenshots
 using a combination of GPT and OCR. The great part is that accuracy is guaranteed here since there is live processing happening based 
 on the ultimate source of truth -- the codebase. Things like documentation in Notion, or Figma screenshots get outdated almost instantly.
+
+The code isn't the prettiest as the goal of this was a private side project rather than OSS.
