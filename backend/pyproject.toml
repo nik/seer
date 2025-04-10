@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "backend"
+version = "0.1.0"
+description = ""
+authors = ["nik kov <nickkov89@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = {extras = ["standard"], version = "^0.112.0"}
+uvicorn = {extras = ["standard"], version = "^0.30.5"}
+celery = {extras = ["redis"], version = "^5.4.0"}
+tarsier = "^0.6.32"
+playwright = "^1.45.1"
+llama-index-llms-anthropic = "^0.1.16"
+llama-index-llms-groq = "^0.1.4"
+pydantic = "^2.8.2"
+sse-starlette = "^2.1.3"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
