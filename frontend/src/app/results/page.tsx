@@ -7,7 +7,8 @@ import { LoadingSpinner } from '@/components/ui/spinner';
 
 export default function Page() {
   const [text, setText] = useState('');
-  const [taskId, setTaskId] = useState<string | null>(null);
+  const [generatorTaskId, setGeneratorTaskId] = useState<string | null>(null);
+  const [listenerTaskId, setListenerTaskId] = useState<string | null>(null);
   const [jobStatus, setJobStatus] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -24,7 +25,8 @@ export default function Page() {
         throw new Error('Network response was not ok');
       }
       const data = await response.json();
-      setTaskId(data.task_id);
+      setGeneratorTaskId(data.task_id);
+      setListenerTaskId(data.listener_task_id);
       setJobStatus('PROGRESS');
     } catch (error) {
       console.error('Error submitting query:', error);
@@ -32,9 +34,9 @@ export default function Page() {
   };
 
   useEffect(() => {
-    if (taskId) {
+    if (generatorTaskId) {
       const eventSource = new EventSource(
-        `http://localhost:8000/job_status_stream/${taskId}`
+        `http://localhost:8000/generator_job/${generatorTaskId}`
       );
 
       eventSource.addEventListener('job_status', (event) => {
@@ -55,7 +57,27 @@ export default function Page() {
         eventSource.close();
       };
     }
-  }, [taskId]);
+
+    if (listenerTaskId) {
+      const eventSource = new EventSource(
+        `http://localhost:8000/listener_job/${listenerTaskId}`
+      );
+      eventSource.addEventListener('screenshot', (event) => {
+        console.log(event.data);
+      });
+      eventSource.addEventListener('end', (event) => {
+        console.log(event.data);
+        eventSource.close();
+      });
+      eventSource.onerror = (error) => {
+        console.error('EventSource failed:', error);
+        eventSource.close();
+      };
+      return () => {
+        eventSource.close();
+      };
+    }
+  }, [generatorTaskId, listenerTaskId]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-white">

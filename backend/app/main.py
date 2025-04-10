@@ -40,11 +40,30 @@ class Query(BaseModel):
 @app.post("/query")
 async def query(query: Query):
     task = tasks.run_tarsier_query.delay(query.text)
-    return {"message": "Query received successfully", "task_id": task.id}
+    listener_task = tasks.listen_for_screenshots.delay()
+    return {
+        "message": "Query received successfully",
+        "task_id": task.id,
+        "listener_task_id": listener_task.id,
+    }
 
 
-@app.get("/job_status_stream/{task_id}")
-async def job_status_stream(task_id: str, request: Request):
+@app.get("/generator_job/{task_id}")
+async def generator_job(task_id: str, request: Request):
+    async def event_generator():
+        while True:
+            if await request.is_disconnected():
+                break
+
+            task_result = AsyncResult(task_id)
+            yield {"event": "job_status", "data": task_result.status}
+
+            await asyncio.sleep(1)
+
+    return EventSourceResponse(event_generator())
+
+@app.get("/listener_job/{task_id}")
+async def listener_job(task_id: str, request: Request):
     async def event_generator():
         while True:
             if await request.is_disconnected():

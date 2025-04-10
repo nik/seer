@@ -83,3 +83,9 @@ def run_tarsier_query(self, query: str):
     asyncio.run(agent.run(agent_instructions))
     self.update_state(state="SUCCESS", meta={"status": "Query completed"})
     return "Done"
+
+@celery_app.task(bind=True)
+def listen_for_screenshots(self):
+    self.update_state(state="PROGRESS", meta={"progress": "Listening for screenshots"})
+    
+    return "Done"
